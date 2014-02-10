@@ -1,5 +1,5 @@
 %%%%%%%%%%%%%%%%%%%%%%%%geometry information of the chip%%%%%%%%%%%%%%%%%%%
-    die.N = 2;
+    die.N = 4;
     die.model = 3; % for each die, how many layers we model
     
     % flip chip package; order:
@@ -21,8 +21,8 @@
     %for the interposer dimension
     pack.Xsize = 35e-3;
     pack.Ysize = 35e-3;
-    pack.Xgrid = 700e-6;
-    pack.Ygrid = 700e-6;
+    pack.Xgrid = 200e-6;
+    pack.Ygrid = 200e-6;
     
     %assumed TSV starting from top metal layer of a top die
     %            to the first metal layer of a bottom die
@@ -45,31 +45,49 @@
     portion = 0.5; %the metal portion in the ILD layers
     %This is used for equivalent thermal resistance calculation of metal
     %layer
-    power = [40, 30]; %20, 10];  %power dissipation of each die
+    power = [40, 30, 20, 10];  %power dissipation of each die
     % from top to bottom; unit: watt
+    
+    %power blocks by each die
+    %format: bottom left point bl_x, bl_y, width, height, power
+    %list blocks in die1 and then die2, die3 ....
+    map = [0     0     5e-3    5e-3     8;
+           0     5e-3  5e-3    5e-3     2;
+           5e-3  0     5e-3    10e-3    30;
+           0     0     8e-3    6e-3     20;
+           0     6e-3  8e-3    4e-3     4;
+           8e-3  0     2e-3    10e-3    6;
+           1e-3  1e-3  8e-3    8e-3     13];
+    %blk_num is for splitting the power maps of each die
+    blk_num = [3 3 1 0];
+    
+    
     granularity = 20;
     % thermal map, number of color used
     draw = 1;
     % whether to draw the thermal map; 1 yes; 0 no
+    drawP = 0;
+    % whether to draw the power maps; 1 yes, 0 no
+    % only draw the die with blk_num > 1 (non-uniform cases)
     displayT = 1;
     % print the temperature information
 %%%%%%%%%%%%%%%%%%%%%%%%finish geometry information%%%%%%%%%%%%%%%%%%%%%%%%
 
 %%%%%%%%%%%%%%boundary condition%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-    %the heat transfer coefficient
+    %the thermal resistivity of each boundary
     % r = 1/(hA); A is the size of top surface area
     % the cooling capability of the top heatsink; 20000, 1cm*1cm, means:
-    % 0.5 W/K
+    % 0.5 W*cm^2/K
     h.up = 20000;
     
-    h.down = 5; % the cooling of bottom surface; 
+    h.down = 0; % the cooling of bottom surface; 
     %(only the area with the same size of chip;)
     %microfluidic is assumed to be as large as chip in the interposer
     
-    h.side = 5;
+    h.side = 0;
     % side surface cooling, usually near adiabatic
     
-    h.d = 5;
+    h.d = 0;
     %the cooling of the bottom surface except for the MFHS area
     
     h.Ta = 298;
@@ -77,8 +95,8 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%finish boundary condition%%%%%%%%%%%%%%%%%%%%%%%%%
     
     T = ThermSim( die, thick, chip, pack, ...
-              tsv, bump, portion, power, ...
-              granularity, draw, h, displayT);
-               
+              tsv, bump, portion, power,  ...
+              map, blk_num, granularity, ...
+              draw, drawP, h, displayT);
                
                
